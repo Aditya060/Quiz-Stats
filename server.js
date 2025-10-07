@@ -13,9 +13,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize DB (configurable for Render persistent disk)
 const DEFAULT_DATA_DIR = path.join(__dirname, 'data');
-const DB_FILE = process.env.DB_FILE || path.join(DEFAULT_DATA_DIR, 'quiz.db');
-fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-const db = new Database(DB_FILE);
+const FALLBACK_TMP_DB = path.join('/tmp', 'quiz.db');
+let dbFilePath = process.env.DB_FILE || path.join(DEFAULT_DATA_DIR, 'quiz.db');
+try {
+  fs.mkdirSync(path.dirname(dbFilePath), { recursive: true });
+} catch (err) {
+  if (err && (err.code === 'EACCES' || err.code === 'EROFS')) {
+    console.warn(`[quiz] Cannot create DB dir at ${path.dirname(dbFilePath)} (${err.code}). Falling back to ${FALLBACK_TMP_DB}.`);
+    try {
+      fs.mkdirSync(path.dirname(FALLBACK_TMP_DB), { recursive: true });
+      dbFilePath = FALLBACK_TMP_DB;
+    } catch (e2) {
+      console.error(`[quiz] Failed to prepare fallback DB dir: ${e2.message}`);
+      process.exit(1);
+    }
+  } else {
+    throw err;
+  }
+}
+const db = new Database(dbFilePath);
 db.pragma('journal_mode = WAL');
 
 // Create tables if not exists
