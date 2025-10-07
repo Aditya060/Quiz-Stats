@@ -56,33 +56,43 @@ CREATE TABLE IF NOT EXISTS responses (
   FOREIGN KEY(question_id) REFERENCES questions(id),
   FOREIGN KEY(option_id) REFERENCES options(id)
 );
+
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
 `);
 
-// Seed data if empty
-const questionCount = db.prepare('SELECT COUNT(1) as c FROM questions').get().c;
-if (questionCount === 0) {
+// Seed data with versioning
+const getMeta = db.prepare('SELECT value FROM meta WHERE key = ?');
+const setMeta = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
+const currentSeed = getMeta.get('seed_version')?.value || '0';
+if (currentSeed !== '2') {
+  const deleteAll = db.transaction(() => {
+    db.exec('DELETE FROM responses; DELETE FROM options; DELETE FROM questions;');
+  });
+  deleteAll();
+
   const insertQuestion = db.prepare('INSERT INTO questions (text) VALUES (?)');
   const insertOption = db.prepare('INSERT INTO options (question_id, text) VALUES (?, ?)');
-  const seed = db.transaction(() => {
-    const q1 = insertQuestion.run('What is your favorite programming language?').lastInsertRowid;
-    insertOption.run(q1, 'JavaScript');
-    insertOption.run(q1, 'Python');
-    insertOption.run(q1, 'Java');
-    insertOption.run(q1, 'C++');
+  const seedV2 = db.transaction(() => {
+    const q1 = insertQuestion.run('When was Alef launched?').lastInsertRowid;
+    insertOption.run(q1, '2012');
+    insertOption.run(q1, '2013');
+    insertOption.run(q1, '2014');
 
-    const q2 = insertQuestion.run('Which frontend framework do you prefer?').lastInsertRowid;
-    insertOption.run(q2, 'React');
-    insertOption.run(q2, 'Vue');
-    insertOption.run(q2, 'Angular');
-    insertOption.run(q2, 'Svelte');
+    const q2 = insertQuestion.run('How many units are there in Al Mamsha?').lastInsertRowid;
+    insertOption.run(q2, '1500');
+    insertOption.run(q2, '5000');
+    insertOption.run(q2, '10000');
 
-    const q3 = insertQuestion.run('What is your preferred database?').lastInsertRowid;
-    insertOption.run(q3, 'PostgreSQL');
-    insertOption.run(q3, 'MySQL');
-    insertOption.run(q3, 'SQLite');
-    insertOption.run(q3, 'MongoDB');
+    const q3 = insertQuestion.run("What was Alef's first project?").lastInsertRowid;
+    insertOption.run(q3, 'Mamsha');
+    insertOption.run(q3, '06mall');
+    insertOption.run(q3, 'Olfah');
   });
-  seed();
+  seedV2();
+  setMeta.run('seed_version', '2');
 }
 
 // API: get questions with options
@@ -136,6 +146,18 @@ app.get('/', (req, res) => {
 });
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+// QR endpoints: simple landing and image serving
+app.get('/qr', (req, res) => {
+  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Scan to Start Quiz</title><style>body{background:#0b0a0f;color:#d4af37;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}.card{background:#13121a;border:1px solid #2a2933;border-radius:16px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.6);text-align:center}img{width:320px;height:320px;border-radius:12px;border:2px solid #d4af37;box-shadow:0 0 30px rgba(212,175,55,.35)}h1{margin:0 0 12px 0;font-weight:700;letter-spacing:.5px}</style></head><body><div class="card"><h1>Scan to Start Quiz</h1><img src="/qr-image" alt="Quiz QR"/></div></body></html>`);
+});
+app.get('/qr-image', (req, res) => {
+  const imgPath = path.join(__dirname, 'Quiz.png');
+  if (fs.existsSync(imgPath)) {
+    return res.sendFile(imgPath);
+  }
+  res.status(404).send('QR image not found');
 });
 
 app.listen(PORT, () => {

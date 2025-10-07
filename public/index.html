@@ -5,21 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Quiz</title>
     <style>
-      body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; }
-      .container { max-width: 720px; margin: 0 auto; }
-      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
-      .options { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
-      button { padding: 10px 14px; border: 0; border-radius: 6px; background: #111827; color: #fff; cursor: pointer; }
-      button[disabled] { opacity: 0.5; cursor: not-allowed; }
-      .nav { display: flex; gap: 8px; margin-top: 16px; }
+      :root { --bg:#0b0a0f; --card:#13121a; --gold:#d4af37; --muted:#9b8b4e; --ink:#eae6d1; }
+      html,body { height:100%; }
+      body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: radial-gradient(circle at 20% 10%, #15131c, #0b0a0f 60%); color: var(--ink); }
+      .container { max-width: 820px; margin: 0 auto; padding: 28px 20px; }
+      .title { display:flex; align-items:center; justify-content:space-between; }
+      .title h1 { color: var(--gold); letter-spacing: .5px; margin:0; text-shadow: 0 4px 30px rgba(212,175,55,.25); }
+      .card { border: 1px solid #2a2933; border-radius: 16px; padding: 24px; background: linear-gradient(180deg, #161520, #12101a); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+      .question { font-size: 22px; font-weight: 700; color: var(--ink); }
+      .options { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+      .option { border:1px solid #2a2933; border-radius:12px; padding:12px 14px; cursor:pointer; background: #0f0e15; color: var(--ink); transition: transform .15s ease, box-shadow .15s ease, border-color .15s; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+      .option:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(212,175,55,.15); border-color: var(--gold); }
+      .option input { margin-right: 8px; accent-color: var(--gold); }
+      .nav { display: flex; gap: 10px; margin-top: 20px; }
+      .btn { padding: 12px 18px; border: 1px solid var(--gold); border-radius: 12px; background: linear-gradient(135deg, #ffe8a3, var(--gold)); color: #0b0a0f; cursor: pointer; font-weight: 800; letter-spacing:.3px; box-shadow: 0 10px 30px rgba(212,175,55,.25); transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
+      .btn:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(212,175,55,.35); }
+      .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform:none; box-shadow:none; }
       .hidden { display: none; }
-      .progress { margin-bottom: 12px; color: #6b7280; }
-      a { color: #2563eb; }
+      .progress { margin: 12px 0; color: var(--muted); font-weight: 600; }
+      a { color: var(--gold); }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>3-Question Quiz</h1>
+      <div class="title">
+        <h1>Alef Quiz</h1>
+        <a href="/dashboard" style="text-decoration:none;color:var(--gold);font-weight:700;">Dashboard →</a>
+      </div>
       <p class="progress" id="progress"></p>
       <div class="card">
         <div id="quiz"></div>
@@ -56,12 +68,12 @@
         const selected = state.selections.get(q.id);
         quiz.innerHTML = `
           <div>
-            <h2>${q.text}</h2>
+            <div class="question">${q.text}</div>
             <div class="options">
               ${q.options.map(o => `
-                <label style="border:1px solid #e5e7eb;border-radius:6px;padding:10px;display:block;">
+                <label class="option">
                   <input type="radio" name="option" value="${o.id}" ${selected === o.id ? 'checked' : ''} />
-                  <span style="margin-left:8px;">${o.text}</span>
+                  <span>${o.text}</span>
                 </label>
               `).join('')}
             </div>
@@ -105,7 +117,11 @@
           body: JSON.stringify({ answers })
         });
         const data = await res.json();
-        document.getElementById('status').textContent = data.ok ? 'Submitted! You can close this tab.' : (data.error || 'Error');
+        if (data.ok) {
+          window.location.href = '/thankyou.html';
+        } else {
+          document.getElementById('status').textContent = data.error || 'Error';
+        }
       });
 
       loadQuestions();
