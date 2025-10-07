@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quiz Dashboard</title>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; }
+      .container { max-width: 900px; margin: 0 auto; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+      .option { display:flex; justify-content: space-between; padding: 8px 0; border-bottom:1px dashed #e5e7eb; }
+      .option:last-child { border-bottom: 0; }
+      .muted { color: #6b7280; }
+      a { color: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Live Quiz Stats</h1>
+      <p class="muted">Auto-refreshing every 2 seconds.</p>
+      <div id="stats"></div>
+      <p style="margin-top:16px;">Take the quiz <a href="/">here</a>.</p>
+    </div>
+    <script>
+      async function loadStats() {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        render(data.stats);
+      }
+
+      function render(stats) {
+        const container = document.getElementById('stats');
+        container.innerHTML = stats.map(q => `
+          <div class="card">
+            <h2>${q.text}</h2>
+            ${q.options.map(o => `
+              <div class="option">
+                <span>${o.text}</span>
+                <strong>${o.count}</strong>
+              </div>
+            `).join('')}
+          </div>
+        `).join('');
+      }
+
+      loadStats();
+      setInterval(loadStats, 2000);
+    </script>
+  </body>
+  </html>
+
+

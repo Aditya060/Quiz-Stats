@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quiz</title>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; }
+      .container { max-width: 720px; margin: 0 auto; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
+      .options { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
+      button { padding: 10px 14px; border: 0; border-radius: 6px; background: #111827; color: #fff; cursor: pointer; }
+      button[disabled] { opacity: 0.5; cursor: not-allowed; }
+      .nav { display: flex; gap: 8px; margin-top: 16px; }
+      .hidden { display: none; }
+      .progress { margin-bottom: 12px; color: #6b7280; }
+      a { color: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>3-Question Quiz</h1>
+      <p class="progress" id="progress"></p>
+      <div class="card">
+        <div id="quiz"></div>
+        <div class="nav">
+          <button id="prevBtn">Previous</button>
+          <button id="nextBtn">Next</button>
+          <button id="submitBtn" class="hidden">Submit</button>
+        </div>
+      </div>
+      <p style="margin-top:16px;">View live results on the <a href="/dashboard">dashboard</a>.</p>
+      <p id="status" style="margin-top:8px;"></p>
+    </div>
+    <script>
+      const state = { questions: [], current: 0, selections: new Map() };
+
+      async function loadQuestions() {
+        const res = await fetch('/api/questions');
+        const data = await res.json();
+        state.questions = data.questions;
+        render();
+      }
+
+      function render() {
+        const q = state.questions[state.current];
+        const quiz = document.getElementById('quiz');
+        const progress = document.getElementById('progress');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        progress.textContent = `Question ${state.current + 1} of ${state.questions.length}`;
+
+        if (!q) return;
+        const selected = state.selections.get(q.id);
+        quiz.innerHTML = `
+          <div>
+            <h2>${q.text}</h2>
+            <div class="options">
+              ${q.options.map(o => `
+                <label style="border:1px solid #e5e7eb;border-radius:6px;padding:10px;display:block;">
+                  <input type="radio" name="option" value="${o.id}" ${selected === o.id ? 'checked' : ''} />
+                  <span style="margin-left:8px;">${o.text}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+        quiz.querySelectorAll('input[name="option"]').forEach(input => {
+          input.addEventListener('change', (e) => {
+            state.selections.set(q.id, Number(e.target.value));
+            updateButtons();
+          });
+        });
+
+        updateButtons();
+
+        function updateButtons() {
+          prevBtn.disabled = state.current === 0;
+          const hasSelection = state.selections.has(q.id);
+          const last = state.current === state.questions.length - 1;
+          nextBtn.classList.toggle('hidden', last);
+          submitBtn.classList.toggle('hidden', !last);
+          nextBtn.disabled = !hasSelection;
+          submitBtn.disabled = !hasSelection;
+        }
+      }
+
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        if (state.current > 0) { state.current -= 1; render(); }
+      });
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        if (state.current < state.questions.length - 1) { state.current += 1; render(); }
+      });
+      document.getElementById('submitBtn').addEventListener('click', async () => {
+        const answers = state.questions.map(q => ({
+          questionId: q.id,
+          optionId: state.selections.get(q.id)
+        }));
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers })
+        });
+        const data = await res.json();
+        document.getElementById('status').textContent = data.ok ? 'Submitted! You can close this tab.' : (data.error || 'Error');
+      });
+
+      loadQuestions();
+    </script>
+  </body>
+  </html>
+
+

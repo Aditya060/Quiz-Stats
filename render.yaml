@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: quiz-stats
+    env: node
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_FILE
+        value: /var/data/quiz.db
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+
