@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Thank You</title>
     <style>
-      :root { --bg:#0b0a0f; --card:#13121a; --gold:#d4af37; --muted:#9b8b4e; }
+      :root { --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#d4af37; --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10); --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
       html,body { height:100%; }
-      body { margin:0; background:var(--bg); color:var(--gold); font-family: system-ui,-apple-system,sans-serif; display:flex; align-items:center; justify-content:center; }
-      .card { width:min(720px, 92%); background:var(--card); border:1px solid #2a2933; border-radius:16px; padding:32px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.6); }
-      h1 { margin:0 0 8px 0; font-size:42px; letter-spacing:.5px; }
+      body { margin:0; background: radial-gradient(1600px 1000px at 50% -10%, #11131a 0%, #0a0b0f 60%); color:var(--ink); font-family: system-ui,-apple-system,sans-serif; display:flex; align-items:center; justify-content:center; }
+      .card { width:min(720px, 92%); background:var(--glass); border:1px solid var(--stroke); border-radius:16px; padding:32px; text-align:center; box-shadow: var(--shadow); backdrop-filter: blur(12px) saturate(140%); }
+      h1 { margin:0 0 8px 0; font-size:42px; letter-spacing:.2px; font-weight:900; }
       p { color:var(--muted); margin:0 0 24px 0; }
-      a.btn { display:inline-block; padding:12px 18px; border-radius:10px; border:1px solid var(--gold); color:var(--bg); background: linear-gradient(135deg, #ffe8a3, var(--gold)); text-decoration:none; font-weight:700; transition: transform .2s ease, box-shadow .2s ease; box-shadow:0 10px 30px rgba(212,175,55,.25); }
-      a.btn:hover { transform: translateY(-2px); box-shadow:0 18px 40px rgba(212,175,55,.35); }
+      a.btn { display:inline-block; padding:12px 18px; border-radius:12px; border:1px solid var(--stroke); color: var(--ink); background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06)); text-decoration:none; font-weight:800; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; box-shadow: var(--shadow); }
+      a.btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.2); box-shadow: 0 16px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06); }
     </style>
   </head>
   <body>

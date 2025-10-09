@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Q&A Display</title>
     <style>
-      :root { --bg:#0b0a0f; --card:#13121a; --gold:#d4af37; --muted:#9b8b4e; --ink:#eae6d1; }
+      :root { --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#d4af37; --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10); --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
       html,body { height: 100%; }
-      body { margin: 0; background: radial-gradient(circle at 80% 0%, #171522, #0b0a0f 60%); color: var(--ink); font-family: system-ui,-apple-system,sans-serif; }
+      body { margin: 0; background: radial-gradient(1200px 800px at 80% 0%, #11131a 0%, #0a0b0f 60%); color: var(--ink); font-family: system-ui,-apple-system,sans-serif; }
       .wrap { display:flex; align-items:flex-start; justify-content:center; height:100%; padding: 24px; overflow:auto; }
-      .card { width: min(1200px, 96%); border: 1px solid #2a2933; border-radius: 20px; background: linear-gradient(180deg, #161520, #12101a); padding: 24px 28px; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+      .card { width: min(1200px, 96%); border: 1px solid var(--stroke); border-radius: 20px; background: var(--glass); padding: 24px 28px; box-shadow: var(--shadow); backdrop-filter: blur(12px) saturate(140%); }
       .label { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .8px; }
       .question { font-size: 40px; font-weight: 900; margin: 8px 0 10px 0; color: var(--ink); }
-      .answer { font-size: 24px; color: var(--gold); }
+      .answer { font-size: 24px; color: var(--accent); }
       .meta { color: var(--muted); font-weight:700; margin-top: 4px; }
       .stack { width: min(1200px, 96%); display:flex; flex-direction:column; gap:16px; }
       .small { font-size: 14px; }
