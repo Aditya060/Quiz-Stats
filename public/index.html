@@ -45,12 +45,18 @@
       <p id="status" style="margin-top:8px;"></p>
     </div>
     <script>
-      const state = { questions: [], current: 0, selections: new Map() };
+      const state = { questions: [], current: 0, selections: new Map(), status: 'idle' };
 
       async function loadQuestions() {
-        const res = await fetch('/api/questions');
-        const data = await res.json();
-        state.questions = data.questions;
+        const [qres, sres] = await Promise.all([
+          fetch('/api/questions'),
+          fetch('/api/state')
+        ]);
+        const qdata = await qres.json();
+        const sdata = await sres.json();
+        state.questions = qdata.questions;
+        state.current = sdata.activeIndex || 0;
+        state.status = sdata.status || 'idle';
         render();
       }
 
@@ -77,6 +83,7 @@
                 </label>
               `).join('')}
             </div>
+            <div id="liveStats" style="margin-top:10px;"></div>
           </div>
         `;
 
@@ -89,14 +96,29 @@
 
         updateButtons();
 
-        function updateButtons() {
+        async function updateButtons() {
           prevBtn.disabled = state.current === 0;
           const hasSelection = state.selections.has(q.id);
+          // In host-driven mode we hide next/submit; keep for fallback
           const last = state.current === state.questions.length - 1;
-          nextBtn.classList.toggle('hidden', last);
-          submitBtn.classList.toggle('hidden', !last);
+          nextBtn.classList.toggle('hidden', true);
+          submitBtn.classList.toggle('hidden', true);
           nextBtn.disabled = !hasSelection;
           submitBtn.disabled = !hasSelection;
+          // Load live stats for current question
+          const statsRes = await fetch(`/api/stats?questionId=${q.id}`);
+          const statsData = await statsRes.json();
+          const s = statsData.stats[0];
+          const total = s.total || 0;
+          const ls = document.getElementById('liveStats');
+          ls.innerHTML = s.options.map(o => {
+            const pct = total ? Math.round((o.count / total) * 100) : 0;
+            const isMine = state.selections.get(q.id) === o.id;
+            return `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+              <span style="${isMine ? 'color: var(--gold); font-weight:800;' : ''}">${o.text}${isMine ? ' ✓' : ''}</span>
+              <span style="color: var(--muted);">${pct}% (${o.count})</span>
+            </div>`;
+          }).join('') + `<div style="margin-top:6px;color:var(--muted);">Total voters: ${total}</div>`;
         }
       }
 
@@ -107,6 +129,7 @@
         if (state.current < state.questions.length - 1) { state.current += 1; render(); }
       });
       document.getElementById('submitBtn').addEventListener('click', async () => {
+        // legacy fallback
         const answers = state.questions.map(q => ({
           questionId: q.id,
           optionId: state.selections.get(q.id)
@@ -117,12 +140,59 @@
           body: JSON.stringify({ answers })
         });
         const data = await res.json();
-        if (data.ok) {
-          window.location.href = '/thankyou.html';
-        } else {
-          document.getElementById('status').textContent = data.error || 'Error';
+        if (data.ok) window.location.href = '/thankyou.html';
+      });
+
+      // Auto-submit single vote upon selection for current active question
+      document.addEventListener('change', async (e) => {
+        if (e.target && e.target.name === 'option') {
+          const q = state.questions[state.current];
+          const optionId = Number(e.target.value);
+          state.selections.set(q.id, optionId);
+          await fetch('/api/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questionId: q.id, optionId })
+          });
+          // Re-render to reflect live stats and highlight
+          render();
         }
       });
+
+      // Socket for realtime state changes
+      const s = document.createElement('script');
+      s.src = '/socket.io/socket.io.js';
+      s.onload = () => {
+        const socket = io();
+        socket.on('stateChanged', async () => {
+          await loadQuestions();
+          if (state.status === 'ended') {
+            window.location.href = '/thankyou.html';
+          }
+        });
+        socket.on('statsUpdated', async () => {
+          // Refresh stats pane only
+          const q = state.questions[state.current];
+          if (q) {
+            const statsRes = await fetch(`/api/stats?questionId=${q.id}`);
+            const statsData = await statsRes.json();
+            const s = statsData.stats[0];
+            const total = s.total || 0;
+            const ls = document.getElementById('liveStats');
+            if (ls) {
+              ls.innerHTML = s.options.map(o => {
+                const pct = total ? Math.round((o.count / total) * 100) : 0;
+                const isMine = state.selections.get(q.id) === o.id;
+                return `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+                  <span style="${isMine ? 'color: var(--gold); font-weight:800;' : ''}">${o.text}${isMine ? ' ✓' : ''}</span>
+                  <span style=\"color: var(--muted);\">${pct}% (${o.count})</span>
+                </div>`;
+              }).join('') + `<div style=\"margin-top:6px;color:var(--muted);\">Total voters: ${total}</div>`;
+            }
+          }
+        });
+      };
+      document.body.appendChild(s);
 
       loadQuestions();
     </script>

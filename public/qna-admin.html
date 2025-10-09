@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Q&A Admin</title>
+    <style>
+      :root { --bg:#0b0a0f; --card:#13121a; --gold:#d4af37; --muted:#9b8b4e; --ink:#eae6d1; }
+      body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: radial-gradient(circle at 80% 0%, #171522, #0b0a0f 60%); color: var(--ink); }
+      .container { max-width: 1000px; margin: 0 auto; padding: 28px 20px; }
+      .header { display:flex; align-items:center; justify-content:space-between; }
+      .header h1 { color: var(--gold); margin:0; }
+      .card { border: 1px solid #2a2933; border-radius: 16px; padding: 18px; background: linear-gradient(180deg, #161520, #12101a); box-shadow: 0 20px 60px rgba(0,0,0,.5); margin-bottom: 16px; }
+      .btn { padding: 8px 12px; border:1px solid var(--gold); border-radius: 10px; background: linear-gradient(135deg, #ffe8a3, var(--gold)); color: #0b0a0f; cursor: pointer; font-weight: 800; }
+      .muted { color: var(--muted); }
+      .row { display:flex; align-items:center; gap:10px; justify-content:space-between; }
+      .live { display:inline-flex; align-items:center; gap:8px; color: var(--muted); }
+      .dot { width:10px; height:10px; border-radius:50%; background:#666; box-shadow:0 0 12px rgba(0,0,0,.4); }
+      .dot.live { background:#36d399; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Q&A Admin</h1>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div class="live"><span id="liveDot" class="dot"></span><span id="liveText">Offline</span></div>
+          <a href="/qna-display.html" style="color: var(--gold); text-decoration:none;">Open Display →</a>
+        </div>
+      </div>
+      <div id="list"></div>
+    </div>
+    <script>
+      async function load() {
+        const res = await fetch('/api/qna/list', { cache: 'no-store' });
+        const data = await res.json();
+        const container = document.getElementById('list');
+        container.innerHTML = data.qna.map(item => `
+          <div class="card qitem" data-id="${item.id}">
+            <div class="row">
+              <div style="flex:1;">
+                <div><strong>${item.user || 'Anonymous'}</strong> <span class="muted">#${item.id}</span></div>
+                <div>${item.text}</div>
+                <div class="muted">${item.created_at}</div>
+                ${item.answered ? `<div class=\"muted\">Answered: ${item.answer_text || ''}</div>` : `
+                  <div style=\"margin-top:8px; display:flex; gap:8px;\">
+                    <input class=\"ans\" placeholder=\"Type answer…\" style=\"flex:1; padding:8px; border-radius:8px; border:1px solid #2a2933; background:#0f0e15; color:var(--ink);\" />
+                    <button class=\"btn save\">Save Answer</button>
+                  </div>
+                `}
+              </div>
+              <div>
+                <button class="btn hl">Highlight</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        // Wire up interactions
+        container.querySelectorAll('.qitem').forEach(card => {
+          const id = Number(card.getAttribute('data-id'));
+          card.addEventListener('click', (e) => {
+            // avoid clicks on inputs/buttons triggering duplicate highlight
+            const t = e.target;
+            if (t && (t.classList.contains('ans') || t.classList.contains('save'))) return;
+            highlight(id);
+          });
+          const hlBtn = card.querySelector('.hl');
+          if (hlBtn) hlBtn.addEventListener('click', (e) => { e.stopPropagation(); highlight(id); });
+          const saveBtn = card.querySelector('.save');
+          if (saveBtn) saveBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const input = card.querySelector('.ans');
+            const val = (input?.value || '').trim();
+            if (!val) return;
+            await answer(id, val);
+          });
+        });
+      }
+
+      async function highlight(id) {
+        await fetch('/api/qna/highlight', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      }
+
+      async function answer(id, ans) {
+        await fetch('/api/qna/answer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, answer: ans }) });
+        load();
+      }
+
+      const s = document.createElement('script');
+      s.src = '/socket.io/socket.io.js';
+      s.onload = () => {
+        const socket = io();
+        const dot = document.getElementById('liveDot');
+        const txt = document.getElementById('liveText');
+        const setLive = (ok) => {
+          if (ok) { dot.classList.add('live'); txt.textContent = 'Live'; }
+          else { dot.classList.remove('live'); txt.textContent = 'Offline'; }
+        };
+        socket.on('connect', () => setLive(true));
+        socket.on('disconnect', () => setLive(false));
+        socket.on('qnaSubmitted', load);
+        socket.on('qnaHighlighted', load);
+        socket.on('qnaAnswered', load);
+      };
+      document.body.appendChild(s);
+
+      load();
+    </script>
+  </body>
+  </html>
+
+

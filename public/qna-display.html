@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Q&A Display</title>
+    <style>
+      :root { --bg:#0b0a0f; --card:#13121a; --gold:#d4af37; --muted:#9b8b4e; --ink:#eae6d1; }
+      html,body { height: 100%; }
+      body { margin: 0; background: radial-gradient(circle at 80% 0%, #171522, #0b0a0f 60%); color: var(--ink); font-family: system-ui,-apple-system,sans-serif; }
+      .wrap { display:flex; align-items:flex-start; justify-content:center; height:100%; padding: 24px; overflow:auto; }
+      .card { width: min(1200px, 96%); border: 1px solid #2a2933; border-radius: 20px; background: linear-gradient(180deg, #161520, #12101a); padding: 24px 28px; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+      .label { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .8px; }
+      .question { font-size: 40px; font-weight: 900; margin: 8px 0 10px 0; color: var(--ink); }
+      .answer { font-size: 24px; color: var(--gold); }
+      .meta { color: var(--muted); font-weight:700; margin-top: 4px; }
+      .stack { width: min(1200px, 96%); display:flex; flex-direction:column; gap:16px; }
+      .small { font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="stack">
+        <div class="card" id="currentBox" style="display:none;">
+          <div class="label">Currently Answering</div>
+          <div id="q" class="question">Waiting for selection…</div>
+          <div id="meta" class="meta"></div>
+        </div>
+        <div class="card">
+          <div class="label">Answered Questions</div>
+          <div id="answers"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      async function refresh() {
+        const [hid, list] = await Promise.all([
+          fetch('/api/qna/highlight').then(r => r.json()),
+          fetch('/api/qna/list').then(r => r.json())
+        ]);
+
+        const currentBox = document.getElementById('currentBox');
+        if (hid.id) {
+          const cur = list.qna.find(i => i.id === hid.id);
+          if (cur && !cur.answered) {
+            currentBox.style.display = '';
+            document.getElementById('q').textContent = cur.text;
+            document.getElementById('meta').textContent = `Asked by ${cur.user || 'Anonymous'} • #${cur.id}`;
+          } else {
+            currentBox.style.display = 'none';
+          }
+        } else {
+          currentBox.style.display = 'none';
+        }
+
+        const answered = list.qna.filter(i => i.answered && i.answer_text);
+        answered.sort((a,b) => a.id - b.id); // chronological
+        const answersEl = document.getElementById('answers');
+        answersEl.innerHTML = answered.length ? answered.map(i => `
+          <div style=\"border-top:1px dashed #2a2933; padding-top:14px; margin-top:14px;\">
+            <div class=\"question\">${i.text}</div>
+            <div class=\"meta\">Asked by ${i.user || 'Anonymous'} • #${i.id}</div>
+            <div class=\"small muted\" style=\"margin-top:4px;\">Answer</div>
+            <div class=\"answer\">${i.answer_text}</div>
+          </div>
+        `).join('') : `<div class=\"meta\">No answers yet.</div>`;
+      }
+
+      const s = document.createElement('script');
+      s.src = '/socket.io/socket.io.js';
+      s.onload = () => {
+        const socket = io();
+        socket.on('qnaHighlighted', refresh);
+        socket.on('qnaAnswered', refresh);
+        socket.on('qnaSubmitted', refresh);
+      };
+      document.body.appendChild(s);
+
+      refresh();
+    </script>
+  </body>
+  </html>
+
+

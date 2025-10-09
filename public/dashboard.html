@@ -19,6 +19,7 @@
       .count { color: var(--gold); font-weight:900; }
       .muted { color: var(--muted); }
       a { color: var(--gold); }
+      .total { font-weight:900; color: var(--muted); }
     </style>
   </head>
   <body>
@@ -27,7 +28,7 @@
         <h1>Live Quiz Stats</h1>
         <a class="pill" href="/">← Take Quiz</a>
       </div>
-      <p class="muted">Auto-refreshing every 2 seconds.</p>
+      <p class="muted">Realtime stats</p>
       <div id="stats"></div>
       <p style="margin-top:16px;">Take the quiz <a href="/">here</a>.</p>
     </div>
@@ -43,6 +44,7 @@
         container.innerHTML = stats.map(q => `
           <div class="card">
             <div class="question">${q.text}</div>
+            <div class="total">Total participants: ${q.total}</div>
             ${q.options.map(o => `
               <div class="option">
                 <span>${o.text}</span>
@@ -54,7 +56,14 @@
       }
 
       loadStats();
-      setInterval(loadStats, 2000);
+      const s = document.createElement('script');
+      s.src = '/socket.io/socket.io.js';
+      s.onload = () => {
+        const socket = io();
+        socket.on('statsUpdated', loadStats);
+        socket.on('stateChanged', loadStats);
+      };
+      document.body.appendChild(s);
     </script>
   </body>
   </html>
