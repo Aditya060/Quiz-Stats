@@ -82,18 +82,19 @@
 
         if (!q) return;
         const selected = state.selections.get(q.id);
+        const alreadyVoted = localStorage.getItem(`voted:q:${q.id}`) === '1';
         quiz.innerHTML = `
           <div>
             <div class="question">${q.text}</div>
             <div class="options">
               ${q.options.map(o => `
                 <label class="option">
-                  <input type="radio" name="option" value="${o.id}" ${selected === o.id ? 'checked' : ''} />
+                  <input type="radio" name="option" value="${o.id}" ${selected === o.id ? 'checked' : ''} ${alreadyVoted ? 'disabled' : ''} />
                   <span>${o.text}</span>
                 </label>
               `).join('')}
             </div>
-            <div id="liveStats" style="margin-top:10px;"></div>
+            ${alreadyVoted ? `<div style="margin-top:10px;color:var(--muted);font-weight:700;">Response recorded</div>` : ''}
           </div>
         `;
 
@@ -115,20 +116,6 @@
           submitBtn.classList.toggle('hidden', true);
           nextBtn.disabled = !hasSelection;
           submitBtn.disabled = !hasSelection;
-          // Load live stats for current question
-          const statsRes = await fetch(`/api/stats?questionId=${q.id}`);
-          const statsData = await statsRes.json();
-          const s = statsData.stats[0];
-          const total = s.total || 0;
-          const ls = document.getElementById('liveStats');
-          ls.innerHTML = s.options.map(o => {
-            const pct = total ? Math.round((o.count / total) * 100) : 0;
-            const isMine = state.selections.get(q.id) === o.id;
-            return `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
-              <span style="${isMine ? 'color: var(--gold); font-weight:800;' : ''}">${o.text}${isMine ? ' ✓' : ''}</span>
-              <span style="color: var(--muted);">${pct}% (${o.count})</span>
-            </div>`;
-          }).join('') + `<div style="margin-top:6px;color:var(--muted);">Total voters: ${total}</div>`;
         }
       }
 
@@ -153,18 +140,30 @@
         if (data.ok) window.location.href = '/thankyou.html';
       });
 
-      // Auto-submit single vote upon selection for current active question
+      // Auto-submit single vote upon selection for current active question (locks after first)
       document.addEventListener('change', async (e) => {
         if (e.target && e.target.name === 'option') {
           const q = state.questions[state.current];
+          if (!q) return;
+          const key = `voted:q:${q.id}`;
+          if (localStorage.getItem(key) === '1') {
+            // already voted for this question on this device; ignore further changes
+            e.target.checked = false;
+            return;
+          }
           const optionId = Number(e.target.value);
           state.selections.set(q.id, optionId);
-          await fetch('/api/vote', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ questionId: q.id, optionId })
-          });
-          // Re-render to reflect live stats and highlight
+          // lock inputs immediately
+          document.querySelectorAll('input[name="option"]').forEach(inp => inp.disabled = true);
+          localStorage.setItem(key, '1');
+          try {
+            await fetch('/api/vote', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ questionId: q.id, optionId })
+            });
+          } catch (_) {}
+          // Re-render to show "Response recorded"
           render();
         }
       });
@@ -180,27 +179,7 @@
             window.location.href = '/thankyou.html';
           }
         });
-        socket.on('statsUpdated', async () => {
-          // Refresh stats pane only
-          const q = state.questions[state.current];
-          if (q) {
-            const statsRes = await fetch(`/api/stats?questionId=${q.id}`);
-            const statsData = await statsRes.json();
-            const s = statsData.stats[0];
-            const total = s.total || 0;
-            const ls = document.getElementById('liveStats');
-            if (ls) {
-              ls.innerHTML = s.options.map(o => {
-                const pct = total ? Math.round((o.count / total) * 100) : 0;
-                const isMine = state.selections.get(q.id) === o.id;
-                return `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
-                  <span style="${isMine ? 'color: var(--gold); font-weight:800;' : ''}">${o.text}${isMine ? ' ✓' : ''}</span>
-                  <span style=\"color: var(--muted);\">${pct}% (${o.count})</span>
-                </div>`;
-              }).join('') + `<div style=\"margin-top:6px;color:var(--muted);\">Total voters: ${total}</div>`;
-            }
-          }
-        });
+        // No participant stats; nothing to do on statsUpdated
       };
       document.body.appendChild(s);
 
