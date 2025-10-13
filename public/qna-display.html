@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Q&A Display</title>
     <style>
-      :root { --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#d4af37; --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10); --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
+      :root { --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#b76a5b; --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10); --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
       html,body { height: 100%; }
       body { margin: 0; background: radial-gradient(1200px 800px at 80% 0%, #11131a 0%, #0a0b0f 60%); color: var(--ink); font-family: system-ui,-apple-system,sans-serif; }
       .wrap { display:flex; align-items:flex-start; justify-content:center; height:100%; padding: 24px; overflow:auto; }
@@ -21,6 +21,10 @@
   <body>
     <div class="wrap">
       <div class="stack">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+          <img src="/assets/logo.png" alt="Alef" style="height:28px;"/>
+          <div class="label">Q&A Display</div>
+        </div>
         <div class="card" id="currentBox" style="display:none;">
           <div class="label">Currently Answering</div>
           <div id="q" class="question">Waiting for selection…</div>

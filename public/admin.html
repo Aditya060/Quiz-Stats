@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Admin Controls</title>
     <style>
-      :root { --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#d4af37; --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10); --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
+      :root { --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#b76a5b; --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10); --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
       body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: radial-gradient(1200px 800px at 80% 0%, #11131a 0%, #0a0b0f 60%); color: var(--ink); }
       .container { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
       .header { display:flex; align-items:center; justify-content:space-between; }
@@ -20,8 +20,11 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>Admin Controls</h1>
-        <a href="/dashboard" style="color: var(--gold); text-decoration:none;">Dashboard →</a>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="/assets/logo.png" alt="Alef" style="height:28px;"/>
+          <h1>Admin Controls</h1>
+        </div>
+        <a href="/dashboard" style="text-decoration:none;">Dashboard →</a>
       </div>
 
       <div class="row" style="margin-top:12px;">
