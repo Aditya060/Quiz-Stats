@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS responses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   question_id INTEGER NOT NULL,
   option_id INTEGER NOT NULL,
+  device_id TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(question_id) REFERENCES questions(id),
   FOREIGN KEY(option_id) REFERENCES options(id)
@@ -76,6 +77,18 @@ CREATE TABLE IF NOT EXISTS qna_submissions (
   answer_text TEXT
 );
 `);
+
+// Ensure device_id column and uniqueness for one-vote-per-device-per-question
+try {
+  const cols = db.prepare("PRAGMA table_info(responses)").all();
+  const hasDevice = cols.some(c => c.name === 'device_id');
+  if (!hasDevice) {
+    db.exec('ALTER TABLE responses ADD COLUMN device_id TEXT;');
+  }
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_responses_device_question ON responses(device_id, question_id);');
+} catch (e) {
+  console.warn('[quiz] Migration check for responses.device_id failed:', e.message);
+}
 
 // Seed data with versioning
 const getMeta = db.prepare('SELECT value FROM meta WHERE key = ?');
@@ -160,10 +173,24 @@ app.post('/api/submit', (req, res) => {
 app.post('/api/vote', (req, res) => {
   const questionId = Number(req.body?.questionId);
   const optionId = Number(req.body?.optionId);
-  if (!questionId || !optionId) return res.status(400).json({ error: 'Invalid vote' });
-  db.prepare('INSERT INTO responses (question_id, option_id) VALUES (?, ?)').run(questionId, optionId);
+  const deviceId = String(req.body?.deviceId || '').trim();
+  if (!questionId || !optionId || !deviceId) return res.status(400).json({ error: 'Invalid vote' });
+  const existing = db.prepare('SELECT id FROM responses WHERE device_id = ? AND question_id = ?').get(deviceId, questionId);
+  if (existing) {
+    return res.status(409).json({ error: 'ALREADY_VOTED' });
+  }
+  db.prepare('INSERT INTO responses (question_id, option_id, device_id) VALUES (?, ?, ?)').run(questionId, optionId, deviceId);
   io.emit('statsUpdated');
   res.json({ ok: true });
+});
+
+app.post('/api/vote/reset', (req, res) => {
+  const questionId = Number(req.body?.questionId);
+  const deviceId = String(req.body?.deviceId || '').trim();
+  if (!questionId || !deviceId) return res.status(400).json({ error: 'Invalid reset' });
+  const info = db.prepare('DELETE FROM responses WHERE device_id = ? AND question_id = ?').run(deviceId, questionId);
+  if (info.changes > 0) io.emit('statsUpdated');
+  res.json({ ok: true, removed: info.changes });
 });
 
 // API: stats per question/option

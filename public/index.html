@@ -63,6 +63,12 @@
     </div>
     <script>
       const state = { questions: [], current: 0, selections: new Map(), status: 'idle' };
+      const deviceId = (() => {
+        const k = 'quiz:deviceId';
+        let v = localStorage.getItem(k);
+        if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(k, v); }
+        return v;
+      })();
 
       // Optional per-device reset: visit /?reset=1 to clear local vote locks
       (function maybeResetDeviceLocks() {
@@ -120,7 +126,10 @@
                 </label>
               `).join('')}
             </div>
-            ${alreadyVoted ? `<div style="margin-top:10px;color:var(--muted);font-weight:700;">Response recorded</div>` : ''}
+            ${alreadyVoted ? `<div style="margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="color:var(--muted);font-weight:700;">Response recorded</div>
+              <button id="resetVote" class="btn" style="padding:8px 12px;">Reset my selection</button>
+            </div>` : ''}
           </div>
         `;
 
@@ -132,6 +141,21 @@
         });
 
         updateButtons();
+
+        const resetBtn = document.getElementById('resetVote');
+        if (resetBtn) {
+          resetBtn.addEventListener('click', async () => {
+            try {
+              await fetch('/api/vote/reset', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ questionId: q.id, deviceId })
+              });
+            } catch (_) {}
+            localStorage.removeItem(`voted:q:${q.id}`);
+            state.selections.delete(q.id);
+            render();
+          });
+        }
 
         async function updateButtons() {
           prevBtn.disabled = state.current === 0;
@@ -187,9 +211,11 @@
             const res = await fetch('/api/vote', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ questionId: q.id, optionId })
+              body: JSON.stringify({ questionId: q.id, optionId, deviceId })
             });
-            if (res.ok && !devBypass) {
+            if (res.status === 409) {
+              localStorage.setItem(key, '1');
+            } else if (res.ok && !devBypass) {
               localStorage.setItem(key, '1');
             } else {
               // allow re-try in dev mode or on failure
