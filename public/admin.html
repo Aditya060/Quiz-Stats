@@ -11,8 +11,8 @@
       .header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
       .brand { display:flex; align-items:center; gap:12px; }
       .header h1 { color: var(--ink); margin:0; font-weight:800; }
-      .btn { padding: 12px 16px; border-radius: 12px; border:1px solid var(--stroke); background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06)); color: var(--ink); cursor: pointer; font-weight: 800; letter-spacing:.2px; box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease; }
-      .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.2); box-shadow: 0 16px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06); }
+      .btn { padding: 12px 16px; border-radius: 12px; border:1px solid var(--accent); background: linear-gradient(180deg, color-mix(in oklab, var(--accent), white 8%), var(--accent)); color: #0a0b0f; cursor: pointer; font-weight: 800; letter-spacing:.2px; box-shadow: 0 8px 26px rgba(183,106,91,.35); transition: transform .15s ease, box-shadow .2s ease; }
+      .btn:hover { transform: translateY(-1px); box-shadow: 0 16px 44px rgba(183,106,91,.45); }
       .row { display:flex; gap:10px; flex-wrap: wrap; }
       .card { border:1px solid var(--stroke); border-radius: 16px; padding: 18px; background: var(--glass); box-shadow: var(--shadow); margin-top: 16px; backdrop-filter: blur(12px) saturate(140%); }
       .muted { color: var(--muted); }
