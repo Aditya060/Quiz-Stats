@@ -17,8 +17,9 @@
         color: var(--ink);
       }
       .container { max-width: 820px; margin: 0 auto; padding: 28px 20px; }
-      .title { display:flex; align-items:center; justify-content:space-between; }
-      .logo { height: 34px; display:block; }
+      .title { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+      .brand { display:flex; align-items:center; gap:12px; }
+      .logo { height: 30px; display:block; filter: drop-shadow(0 1px 0 rgba(0,0,0,.3)); }
       .title h1 { color: var(--ink); letter-spacing:.2px; margin:0; font-weight:800; }
       .title a { color: var(--accent); text-decoration: none; font-weight:700; }
       .card { border:1px solid var(--stroke); border-radius: 16px; padding: 20px 18px; background: var(--glass); box-shadow: var(--shadow); backdrop-filter: blur(12px) saturate(140%); }
@@ -40,11 +41,13 @@
   <body>
     <div class="container">
       <div class="title">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <img src="/assets/logo.png" alt="Alef" class="logo" />
-          <h1>Alef Quiz</h1>
+        <div class="brand">
+          <img src="/assets/logo-white.png" alt="Alef" class="logo" />
+          <h1 style="margin:0;">Alef Quiz</h1>
         </div>
-        <a href="/dashboard" style="text-decoration:none; font-weight:700;">Dashboard →</a>
+        <div>
+          <a href="/dashboard" style="text-decoration:none; font-weight:700;">Dashboard →</a>
+        </div>
       </div>
       <p class="progress" id="progress"></p>
       <div class="card">

@@ -8,6 +8,7 @@
       :root { --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#b76a5b; --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10); --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); }
       body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: radial-gradient(1200px 800px at 20% 10%, #11131a 0%, #0a0b0f 60%); color: var(--ink); }
       .container { max-width: 720px; margin: 0 auto; padding: 28px 20px; }
+      .brand { display:flex; align-items:center; gap:12px; margin-bottom: 8px; }
       .card { border:1px solid var(--stroke); border-radius: 16px; padding: 18px; background: var(--glass); box-shadow: var(--shadow); margin-top: 16px; backdrop-filter: blur(12px) saturate(140%); }
       .btn { padding: 12px 16px; border-radius: 12px; border:1px solid var(--stroke); background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06)); color: var(--ink); cursor: pointer; font-weight: 800; letter-spacing:.2px; box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease; }
       .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.2); box-shadow: 0 16px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06); }
@@ -17,7 +18,10 @@
   </head>
   <body>
     <div class="container">
-      <h1 style="color:var(--gold);">Ask Your Question</h1>
+      <div class="brand">
+        <img src="/assets/logo-white.png" alt="Alef" style="height:28px;"/>
+        <h1 style="margin:0;">Ask Your Question</h1>
+      </div>
       <div class="card">
         <div style="display:flex; gap:10px;">
           <input id="user" placeholder="Name (optional, default Anonymous)" />
