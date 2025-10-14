@@ -20,8 +20,9 @@
       .title { display:flex; align-items:center; justify-content:space-between; gap:12px; }
       .brand { display:flex; align-items:center; gap:10px; min-width:0; }
       .logo { height: 30px; display:block; filter: drop-shadow(0 1px 0 rgba(0,0,0,.3)); }
-      .title h1 { color: var(--ink); letter-spacing:.2px; margin:0; font-weight:800; font-size: clamp(18px, 4.2vw, 28px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .title h1 { display:none; }
       .title a { color: var(--accent); text-decoration: none; font-weight:800; padding: 8px 12px; border-radius:999px; border:1px solid var(--accent); background: linear-gradient(180deg, color-mix(in oklab, var(--accent), white 8%), var(--accent)); color: #0a0b0f; box-shadow: 0 8px 26px rgba(183,106,91,.35); }
+      .pageTitle { text-align:center; margin: 8px 0 12px 0; color: var(--ink); letter-spacing:.2px; font-weight:800; font-size: clamp(20px, 5.2vw, 30px); }
       .card { border:1px solid var(--stroke); border-radius: 16px; padding: 20px 18px; background: var(--glass); box-shadow: var(--shadow); backdrop-filter: blur(12px) saturate(140%); }
       .question { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing:.2px; }
       .options { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
@@ -43,15 +44,14 @@
       <div class="title">
         <div class="brand">
           <img src="/assets/logo-white.png" alt="Alef" class="logo" />
-          <h1>Alef Quiz</h1>
         </div>
         <a href="/dashboard">Dashboard →</a>
       </div>
+      <h1 class="pageTitle">Alef Quiz</h1>
       <p class="progress" id="progress"></p>
       <div class="card">
         <div id="quiz"></div>
-        <div class="nav">
-          <button id="prevBtn" class="btn">Previous</button>
+        <div class="nav" style="justify-content:flex-end;">
           <button id="nextBtn" class="btn">Next</button>
           <button id="submitBtn" class="btn hidden">Submit</button>
         </div>
@@ -104,7 +104,6 @@
         const q = state.questions[state.current];
         const quiz = document.getElementById('quiz');
         const progress = document.getElementById('progress');
-        const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const submitBtn = document.getElementById('submitBtn');
 
@@ -156,7 +155,6 @@
         }
 
         async function updateButtons() {
-          prevBtn.disabled = state.current === 0;
           const hasSelection = state.selections.has(q.id);
           // In host-driven mode we hide next/submit; keep for fallback
           const last = state.current === state.questions.length - 1;
@@ -167,9 +165,6 @@
         }
       }
 
-      document.getElementById('prevBtn').addEventListener('click', () => {
-        if (state.current > 0) { state.current -= 1; render(); }
-      });
       document.getElementById('nextBtn').addEventListener('click', () => {
         if (state.current < state.questions.length - 1) { state.current += 1; render(); }
       });
