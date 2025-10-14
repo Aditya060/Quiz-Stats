@@ -157,16 +157,25 @@
           }
           const optionId = Number(e.target.value);
           state.selections.set(q.id, optionId);
-          // lock inputs immediately
-          document.querySelectorAll('input[name="option"]').forEach(inp => inp.disabled = true);
-          localStorage.setItem(key, '1');
+          const devBypass = new URLSearchParams(location.search).get('dev') === '1';
+          // lock while submitting
+          const inputs = document.querySelectorAll('input[name="option"]');
+          inputs.forEach(inp => inp.disabled = true);
           try {
-            await fetch('/api/vote', {
+            const res = await fetch('/api/vote', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ questionId: q.id, optionId })
             });
-          } catch (_) {}
+            if (res.ok && !devBypass) {
+              localStorage.setItem(key, '1');
+            } else {
+              // allow re-try in dev mode or on failure
+              inputs.forEach(inp => inp.disabled = false);
+            }
+          } catch (_) {
+            inputs.forEach(inp => inp.disabled = false);
+          }
           // Re-render to show "Response recorded"
           render();
         }
