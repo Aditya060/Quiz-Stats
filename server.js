@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS qna_submissions (
 const getMeta = db.prepare('SELECT value FROM meta WHERE key = ?');
 const setMeta = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
 const currentSeed = getMeta.get('seed_version')?.value || '0';
-if (currentSeed !== '2') {
+if (currentSeed !== '3') {
   const deleteAll = db.transaction(() => {
     db.exec('DELETE FROM responses; DELETE FROM options; DELETE FROM questions;');
   });
@@ -89,7 +89,7 @@ if (currentSeed !== '2') {
 
   const insertQuestion = db.prepare('INSERT INTO questions (text) VALUES (?)');
   const insertOption = db.prepare('INSERT INTO options (question_id, text) VALUES (?, ?)');
-  const seedV2 = db.transaction(() => {
+  const seedV3 = db.transaction(() => {
     const q1 = insertQuestion.run('When was Alef launched?').lastInsertRowid;
     insertOption.run(q1, '2012');
     insertOption.run(q1, '2013');
@@ -104,9 +104,14 @@ if (currentSeed !== '2') {
     insertOption.run(q3, 'Mamsha');
     insertOption.run(q3, '06mall');
     insertOption.run(q3, 'Olfah');
+
+    const q4 = insertQuestion.run('How large is the swimmable area in Hayyan?').lastInsertRowid;
+    insertOption.run(q4, '30,000sq.ft');
+    insertOption.run(q4, '55,000 sq.ft');
+    insertOption.run(q4, '80,000 sq.ft');
   });
-  seedV2();
-  setMeta.run('seed_version', '2');
+  seedV3();
+  setMeta.run('seed_version', '3');
 }
 
 // Initialize poll state defaults
