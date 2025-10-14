@@ -61,6 +61,21 @@
     <script>
       const state = { questions: [], current: 0, selections: new Map(), status: 'idle' };
 
+      // Optional one-click reset: /?reset=1 clears local vote locks on this device
+      (function resetIfRequested(){
+        try {
+          const params = new URLSearchParams(location.search);
+          if (params.get('reset') === '1') {
+            const toRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && k.startsWith('voted:q:')) toRemove.push(k);
+            }
+            toRemove.forEach(k => localStorage.removeItem(k));
+          }
+        } catch (_) {}
+      })();
+
       async function loadQuestions() {
         const [qres, sres] = await Promise.all([
           fetch('/api/questions'),
