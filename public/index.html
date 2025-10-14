@@ -61,19 +61,23 @@
     <script>
       const state = { questions: [], current: 0, selections: new Map(), status: 'idle' };
 
-      // Optional one-click reset: /?reset=1 clears local vote locks on this device
-      (function resetIfRequested(){
-        try {
-          const params = new URLSearchParams(location.search);
-          if (params.get('reset') === '1') {
-            const toRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-              const k = localStorage.key(i);
-              if (k && k.startsWith('voted:q:')) toRemove.push(k);
-            }
-            toRemove.forEach(k => localStorage.removeItem(k));
+      // Optional per-device reset: visit /?reset=1 to clear local vote locks
+      (function maybeResetDeviceLocks() {
+        const params = new URLSearchParams(location.search);
+        if (params.get('reset') === '1') {
+          const toRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('voted:q:')) toRemove.push(k);
           }
-        } catch (_) {}
+          toRemove.forEach(k => localStorage.removeItem(k));
+          // Remove the reset param without reloading network if possible
+          try {
+            const url = new URL(location.href);
+            url.searchParams.delete('reset');
+            history.replaceState({}, '', url.toString());
+          } catch (_) {}
+        }
       })();
 
       async function loadQuestions() {
