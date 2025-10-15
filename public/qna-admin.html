@@ -56,6 +56,7 @@
               </div>
               <div>
                 <button class="btn hl">Highlight</button>
+                <button class="btn reject">Reject</button>
               </div>
             </div>
           </div>
@@ -78,6 +79,13 @@
             const val = (input?.value || '').trim();
             if (!val) return;
             await answer(id, val);
+          });
+          const rejectBtn = card.querySelector('.reject');
+          if (rejectBtn) rejectBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!confirm('Reject this question?')) return;
+            await fetch('/api/qna/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            load();
           });
         });
       }
@@ -106,6 +114,7 @@
         socket.on('qnaSubmitted', load);
         socket.on('qnaHighlighted', load);
         socket.on('qnaAnswered', load);
+        socket.on('qnaRejected', load);
       };
       document.body.appendChild(s);
 

@@ -43,7 +43,8 @@ db.pragma('journal_mode = WAL');
 db.exec(`
 CREATE TABLE IF NOT EXISTS questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  text TEXT NOT NULL
+  text TEXT NOT NULL,
+  correct_option_id INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS options (
@@ -86,6 +87,11 @@ try {
     db.exec('ALTER TABLE responses ADD COLUMN device_id TEXT;');
   }
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_responses_device_question ON responses(device_id, question_id);');
+  // ensure correct_option_id exists on questions (older installs)
+  const qcols = db.prepare("PRAGMA table_info(questions)").all();
+  if (!qcols.some(c => c.name === 'correct_option_id')) {
+    db.exec('ALTER TABLE questions ADD COLUMN correct_option_id INTEGER;');
+  }
 } catch (e) {
   console.warn('[quiz] Migration check for responses.device_id failed:', e.message);
 }
@@ -94,7 +100,7 @@ try {
 const getMeta = db.prepare('SELECT value FROM meta WHERE key = ?');
 const setMeta = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
 const currentSeed = getMeta.get('seed_version')?.value || '0';
-if (currentSeed !== '3') {
+if (currentSeed !== '4') {
   const deleteAll = db.transaction(() => {
     db.exec('DELETE FROM responses; DELETE FROM options; DELETE FROM questions;');
   });
@@ -102,29 +108,31 @@ if (currentSeed !== '3') {
 
   const insertQuestion = db.prepare('INSERT INTO questions (text) VALUES (?)');
   const insertOption = db.prepare('INSERT INTO options (question_id, text) VALUES (?, ?)');
-  const seedV3 = db.transaction(() => {
+  const setCorrect = db.prepare('UPDATE questions SET correct_option_id = ? WHERE id = ?');
+  const seedV4 = db.transaction(() => {
     const q1 = insertQuestion.run('When was Alef launched?').lastInsertRowid;
-    insertOption.run(q1, '2012');
-    insertOption.run(q1, '2013');
-    insertOption.run(q1, '2014');
+    const q1o1 = insertOption.run(q1, '2012').lastInsertRowid;
+    const q1o2 = insertOption.run(q1, '2013').lastInsertRowid;
+    const q1o3 = insertOption.run(q1, '2014').lastInsertRowid;
+    // set correct if known later via admin; leaving null by default
 
-    const q2 = insertQuestion.run('How many units are there in Al Mamsha?').lastInsertRowid;
+    const q2 = insertQuestion.run('How many units are there approximately in Al Mamsha?').lastInsertRowid;
     insertOption.run(q2, '1500');
     insertOption.run(q2, '5000');
     insertOption.run(q2, '10000');
 
     const q3 = insertQuestion.run("What was Alef's first project?").lastInsertRowid;
-    insertOption.run(q3, 'Mamsha');
-    insertOption.run(q3, '06mall');
+    insertOption.run(q3, 'Al Mamsha');
+    insertOption.run(q3, '06 Mall');
     insertOption.run(q3, 'Olfah');
 
     const q4 = insertQuestion.run('How large is the swimmable area in Hayyan?').lastInsertRowid;
-    insertOption.run(q4, '30,000sq.ft');
+    insertOption.run(q4, '30,000 sq.ft');
     insertOption.run(q4, '55,000 sq.ft');
     insertOption.run(q4, '80,000 sq.ft');
   });
-  seedV3();
-  setMeta.run('seed_version', '3');
+  seedV4();
+  setMeta.run('seed_version', '4');
 }
 
 // Initialize poll state defaults
@@ -197,8 +205,8 @@ app.post('/api/vote/reset', (req, res) => {
 app.get('/api/stats', (req, res) => {
   const qid = req.query.questionId ? Number(req.query.questionId) : null;
   const questions = qid
-    ? db.prepare('SELECT id, text FROM questions WHERE id = ?').all(qid)
-    : db.prepare('SELECT id, text FROM questions').all();
+    ? db.prepare('SELECT id, text, correct_option_id FROM questions WHERE id = ?').all(qid)
+    : db.prepare('SELECT id, text, correct_option_id FROM questions').all();
   const optionsStmt = db.prepare('SELECT id, text FROM options WHERE question_id = ?');
   const countStmt = db.prepare('SELECT COUNT(1) as c FROM responses WHERE option_id = ?');
   const payload = questions.map(q => {
@@ -208,7 +216,7 @@ app.get('/api/stats', (req, res) => {
       count: countStmt.get(o.id).c
     }));
     const total = opts.reduce((s, o) => s + o.count, 0);
-    return { id: q.id, text: q.text, total, options: opts };
+    return { id: q.id, text: q.text, total, options: opts, correctOptionId: q.correct_option_id };
   });
   res.json({ stats: payload });
 });
@@ -250,7 +258,7 @@ app.post('/api/qna/submit', (req, res) => {
 });
 
 app.get('/api/qna/list', (req, res) => {
-  const rows = db.prepare('SELECT id, user, text, answered, answer_text, created_at FROM qna_submissions ORDER BY id DESC LIMIT 200').all();
+  const rows = db.prepare('SELECT id, user, text, answered, answer_text, created_at FROM qna_submissions WHERE COALESCE(answered,0) >= 0 AND COALESCE((SELECT 0),0) = 0 ORDER BY id DESC LIMIT 200').all();
   res.json({ qna: rows });
 });
 
@@ -273,6 +281,15 @@ app.post('/api/qna/answer', (req, res) => {
   if (!id || !answer) return res.status(400).json({ error: 'id and answer required' });
   db.prepare('UPDATE qna_submissions SET answered = 1, answer_text = ? WHERE id = ?').run(answer, id);
   io.emit('qnaAnswered', { id });
+  res.json({ ok: true });
+});
+
+// Q&A reject (soft delete)
+app.post('/api/qna/reject', (req, res) => {
+  const id = Number(req.body?.id);
+  if (!id) return res.status(400).json({ error: 'id required' });
+  db.prepare('DELETE FROM qna_submissions WHERE id = ?').run(id);
+  io.emit('qnaRejected', { id });
   res.json({ ok: true });
 });
 

@@ -68,10 +68,11 @@
             <div class="total">Total participants: ${total}</div>
             ${q.options.map(o => {
               const pct = total ? Math.round((o.count / total) * 100) : 0;
+              const isCorrect = q.correctOptionId && o.id === q.correctOptionId;
               return `
                 <div class=\"option\">
-                  <div class=\"row\"><span>${o.text}</span><strong class=\"count\">${o.count}</strong></div>
-                  <div class=\"bar\"><div class=\"fill\" style=\"width:${pct}%;\"></div></div>
+                  <div class=\"row\"><span>${o.text}${isCorrect ? ' ✓' : ''}</span><strong class=\"count\">${o.count}</strong></div>
+                  <div class=\"bar\"><div class=\"fill\" style=\"width:${pct}%;${isCorrect ? 'background:linear-gradient(90deg,#36d399,#22c55e);' : ''}\"></div></div>
                 </div>
               `;
             }).join('')}
