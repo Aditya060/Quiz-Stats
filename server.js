@@ -221,6 +221,17 @@ app.get('/api/stats', (req, res) => {
   res.json({ stats: payload });
 });
 
+// Admin: set/unset correct option on a question
+app.post('/api/admin/correct', (req, res) => {
+  const questionId = Number(req.body?.questionId);
+  const optionId = req.body?.optionId === null ? null : Number(req.body?.optionId);
+  if (!questionId) return res.status(400).json({ error: 'questionId required' });
+  const stmt = db.prepare('UPDATE questions SET correct_option_id = ? WHERE id = ?');
+  stmt.run(optionId, questionId);
+  io.emit('statsUpdated');
+  res.json({ ok: true });
+});
+
 // API: admin controls
 app.post('/api/admin/start', (req, res) => {
   // reset responses to start fresh

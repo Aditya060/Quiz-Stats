@@ -38,6 +38,7 @@
 
       <div class="card">
         <div id="state" class="muted"></div>
+        <div id="correctControls" style="margin-top:12px;"></div>
       </div>
     </div>
     <script>
@@ -45,6 +46,28 @@
         const res = await fetch('/api/state');
         const data = await res.json();
         document.getElementById('state').textContent = `Status: ${data.status} • Question ${data.activeIndex + 1} / ${data.totalQuestions}`;
+        // load question/options for active
+        const qs = await fetch('/api/questions').then(r => r.json());
+        const q = qs.questions?.[data.activeIndex];
+        const controls = document.getElementById('correctControls');
+        if (!q) { controls.innerHTML = ''; return; }
+        controls.innerHTML = `
+          <div class="muted" style="margin-bottom:6px;">Mark correct answer</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${q.options.map(o => `<button class=\"btn mark\" data-q=\"${q.id}\" data-o=\"${o.id}\">${o.text}</button>`).join('')}
+            <button class="btn clear" data-q="${q.id}">Clear</button>
+          </div>
+        `;
+        controls.querySelectorAll('.mark').forEach(b => b.addEventListener('click', async () => {
+          const qid = Number(b.getAttribute('data-q'));
+          const oid = Number(b.getAttribute('data-o'));
+          await fetch('/api/admin/correct', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questionId: qid, optionId: oid }) });
+        }));
+        const clear = controls.querySelector('.clear');
+        if (clear) clear.addEventListener('click', async () => {
+          const qid = Number(clear.getAttribute('data-q'));
+          await fetch('/api/admin/correct', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questionId: qid, optionId: null }) });
+        });
       }
 
       document.getElementById('start').addEventListener('click', async () => {
