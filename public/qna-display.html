@@ -39,10 +39,12 @@
         <div id="overlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: rgba(0,0,0,.65); z-index: 50;">
           <div class="card" style="max-width: 900px; text-align:center;">
             <div id="hq" class="question" style="margin:0;">Question</div>
+            <div id="hname" class="meta" style="margin-top:8px;"></div>
           </div>
         </div>
-        <div class="card" id="currentBox" style="display:none;">
+        <div class="card" id="currentBox" style="display:none; text-align:center;">
           <div id="q" class="question">Waiting for selection…</div>
+          <div id="qname" class="meta" style="margin-top:8px;"></div>
         </div>
         <div class="card">
           <div id="answers"></div>
@@ -64,12 +66,14 @@
           if (cur) {
             overlay.style.display = 'flex';
             document.getElementById('hq').textContent = cur.text;
+            document.getElementById('hname').textContent = `${cur.user || 'Anonymous'}`;
           } else {
             overlay.style.display = 'none';
           }
           if (cur && !cur.answered) {
             currentBox.style.display = '';
             document.getElementById('q').textContent = cur.text;
+            document.getElementById('qname').textContent = `${cur.user || 'Anonymous'}`;
           } else {
             currentBox.style.display = 'none';
           }
@@ -84,7 +88,7 @@
         answersEl.innerHTML = answered.length ? answered.map(i => `
           <div style=\"border-top:1px dashed #2a2933; padding-top:14px; margin-top:14px;\">
             <div class=\"question\">${i.text}</div>
-            
+            <div class=\"meta\" style=\"margin-top:6px;\">${i.user || 'Anonymous'}</div>
           </div>
         `).join('') : `<div class=\"meta\">No answers yet.</div>`;
       }
