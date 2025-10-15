@@ -6,7 +6,7 @@
     <title>Quiz</title>
     <style>
       :root {
-        --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#b76a5b;
+        --bg:#0a0b0f; --ink:#eaeef6; --muted:#9aa3b2; --accent:#b76a5b; --danger:#ef4444;
         --glass: rgba(255,255,255,0.06); --stroke: rgba(255,255,255,0.10);
         --shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
       }
@@ -17,12 +17,12 @@
         color: var(--ink);
       }
       .container { max-width: 820px; margin: 0 auto; padding: 28px 20px; }
-      .title { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 8px 0; min-height: 44px; }
+      .title { display:flex; align-items:center; justify-content:flex-start; gap:12px; padding: 8px 0; min-height: 44px; }
       .brand { display:flex; align-items:center; gap:10px; min-width:0; }
       .logo { height: 28px; display:block; }
       .title h1 { display:none; }
       .title .action { color: #0a0b0f; text-decoration: none; font-weight:800; padding: 6px 10px; border-radius:999px; border:1px solid var(--accent); background: linear-gradient(180deg, color-mix(in oklab, var(--accent), white 8%), var(--accent)); line-height: 1; display:inline-flex; align-items:center; height: 28px; box-shadow: 0 4px 14px rgba(183,106,91,.28); font-size: 14px; }
-      .pageTitle { text-align:left; margin: 8px 0 12px 2px; color: var(--ink); letter-spacing:.2px; font-weight:800; font-size: clamp(20px, 5.2vw, 30px); }
+      .pageTitle { text-align:center; margin: 10px 0 12px 0; color: var(--ink); letter-spacing:.2px; font-weight:800; font-size: clamp(20px, 5.2vw, 30px); }
       .card { border:1px solid var(--stroke); border-radius: 16px; padding: 20px 18px; background: var(--glass); box-shadow: var(--shadow); backdrop-filter: blur(12px) saturate(140%); }
       .question { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing:.2px; }
       .options { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
@@ -124,7 +124,7 @@
               `).join('')}
             </div>
             ${alreadyVoted ? `<div style="margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
-              <div style="color:var(--muted);font-weight:700;">Response recorded</div>
+              <div style="color:var(--danger);font-weight:800;">Response recorded</div>
               <button id="resetVote" class="btn" style="padding:8px 12px;">Reset my selection</button>
             </div>` : ''}
           </div>
