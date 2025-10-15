@@ -79,6 +79,7 @@
         socket.on('qnaHighlighted', refresh);
         socket.on('qnaAnswered', refresh);
         socket.on('qnaSubmitted', refresh);
+        socket.on('qnaRejected', refresh);
       };
       document.body.appendChild(s);
 
