@@ -71,7 +71,16 @@
             highlight(id);
           });
           const hlBtn = card.querySelector('.hl');
-          if (hlBtn) hlBtn.addEventListener('click', (e) => { e.stopPropagation(); highlight(id); });
+          if (hlBtn) hlBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            // toggle: if already highlighted, unhighlight; else highlight
+            const cur = await fetch('/api/qna/highlight').then(r => r.json());
+            if (cur.id === id) {
+              await fetch('/api/qna/unhighlight', { method: 'POST' });
+            } else {
+              await highlight(id);
+            }
+          });
           const saveBtn = card.querySelector('.save');
           if (saveBtn) saveBtn.addEventListener('click', async (e) => {
             e.stopPropagation();

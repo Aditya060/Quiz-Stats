@@ -27,6 +27,13 @@
           <img src="/assets/logo-white.png" alt="Alef" style="height:28px;"/>
           <div class="label">Q&A Display</div>
         </div>
+        <div id="overlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: rgba(0,0,0,.65); z-index: 50;">
+          <div class="card" style="max-width: 900px;">
+            <div class="label">Highlighted</div>
+            <div id="hq" class="question">Question</div>
+            <div id="hmeta" class="meta"></div>
+          </div>
+        </div>
         <div class="card" id="currentBox" style="display:none;">
           <div class="label">Currently Answering</div>
           <div id="q" class="question">Waiting for selection…</div>
@@ -46,8 +53,17 @@
         ]);
 
         const currentBox = document.getElementById('currentBox');
+        // Full-screen overlay for highlight (even if answered)
+        const overlay = document.getElementById('overlay');
         if (hid.id) {
           const cur = list.qna.find(i => i.id === hid.id);
+          if (cur) {
+            overlay.style.display = 'flex';
+            document.getElementById('hq').textContent = cur.text;
+            document.getElementById('hmeta').textContent = `Asked by ${cur.user || 'Anonymous'} • #${cur.id}`;
+          } else {
+            overlay.style.display = 'none';
+          }
           if (cur && !cur.answered) {
             currentBox.style.display = '';
             document.getElementById('q').textContent = cur.text;
@@ -56,6 +72,7 @@
             currentBox.style.display = 'none';
           }
         } else {
+          document.getElementById('overlay').style.display = 'none';
           currentBox.style.display = 'none';
         }
 

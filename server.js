@@ -293,6 +293,13 @@ app.post('/api/qna/reject', (req, res) => {
   res.json({ ok: true });
 });
 
+// Q&A unhighlight
+app.post('/api/qna/unhighlight', (req, res) => {
+  setMeta.run('qna_highlight_id', '0');
+  io.emit('qnaHighlighted', { id: 0 });
+  res.json({ ok: true });
+});
+
 // Serve pages
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
