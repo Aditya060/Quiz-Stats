@@ -16,6 +16,7 @@
       .btn:hover { transform: translateY(-1px); box-shadow: 0 16px 44px rgba(183,106,91,.45); }
       .muted { color: var(--muted); }
       .row { display:flex; align-items:center; gap:10px; justify-content:space-between; }
+      .actions { display:flex; align-items:center; gap:8px; flex-wrap: wrap; }
       .live { display:inline-flex; align-items:center; gap:8px; color: var(--muted); }
       .dot { width:10px; height:10px; border-radius:50%; background:#666; box-shadow:0 0 12px rgba(0,0,0,.4); }
       .dot.live { background:#36d399; }
@@ -54,8 +55,9 @@
                   </div>
                 `}
               </div>
-              <div>
+              <div class="actions">
                 <button class="btn hl">Highlight</button>
+                <button class="btn save">Save Answer</button>
                 <button class="btn reject">Reject</button>
               </div>
             </div>

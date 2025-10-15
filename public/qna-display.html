@@ -48,8 +48,8 @@
     <script>
       async function refresh() {
         const [hid, list] = await Promise.all([
-          fetch('/api/qna/highlight').then(r => r.json()),
-          fetch('/api/qna/list').then(r => r.json())
+          fetch('/api/qna/highlight', { cache: 'no-store' }).then(r => r.json()),
+          fetch('/api/qna/list', { cache: 'no-store' }).then(r => r.json())
         ]);
 
         const currentBox = document.getElementById('currentBox');
