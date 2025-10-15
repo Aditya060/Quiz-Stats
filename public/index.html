@@ -45,7 +45,6 @@
         <div class="brand">
           <img src="/assets/logo-white.png" alt="Alef" class="logo" />
         </div>
-        <a href="/dashboard" class="action">Dashboard →</a>
       </div>
       <h1 class="pageTitle">Alef Quiz</h1>
       <p class="progress" id="progress"></p>
@@ -58,6 +57,7 @@
       </div>
       
       <p id="status" style="margin-top:8px;"></p>
+      <p style="margin-top:16px; color: var(--muted); text-align:center;">Please stay on this tab for the next question.</p>
     </div>
     <script>
       const state = { questions: [], current: 0, selections: new Map(), status: 'idle' };
