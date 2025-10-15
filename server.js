@@ -258,7 +258,7 @@ app.post('/api/qna/submit', (req, res) => {
 });
 
 app.get('/api/qna/list', (req, res) => {
-  const rows = db.prepare('SELECT id, user, text, answered, answer_text, created_at FROM qna_submissions WHERE COALESCE(answered,0) >= 0 AND COALESCE((SELECT 0),0) = 0 ORDER BY id DESC LIMIT 200').all();
+  const rows = db.prepare('SELECT id, user, text, created_at FROM qna_submissions ORDER BY id DESC LIMIT 200').all();
   res.json({ qna: rows });
 });
 
@@ -275,14 +275,7 @@ app.get('/api/qna/highlight', (req, res) => {
   res.json({ id });
 });
 
-app.post('/api/qna/answer', (req, res) => {
-  const id = Number(req.body?.id);
-  const answer = (req.body?.answer || '').trim();
-  if (!id || !answer) return res.status(400).json({ error: 'id and answer required' });
-  db.prepare('UPDATE qna_submissions SET answered = 1, answer_text = ? WHERE id = ?').run(answer, id);
-  io.emit('qnaAnswered', { id });
-  res.json({ ok: true });
-});
+// answering removed per spec
 
 // Q&A reject (soft delete)
 app.post('/api/qna/reject', (req, res) => {

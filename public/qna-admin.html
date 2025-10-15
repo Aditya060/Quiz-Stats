@@ -48,15 +48,10 @@
                 <div><strong>${item.user || 'Anonymous'}</strong> <span class="muted">#${item.id}</span></div>
                 <div>${item.text}</div>
                 <div class="muted">${item.created_at}</div>
-                ${item.answered ? `<div class=\"muted\">Answered: ${item.answer_text || ''}</div>` : `
-                  <div style=\"margin-top:8px; display:flex; gap:8px;\">
-                    <input class=\"ans\" placeholder=\"Type answer…\" style=\"flex:1; padding:8px; border-radius:8px; border:1px solid #2a2933; background:#0f0e15; color:var(--ink);\" />
-                  </div>
-                `}
+                
               </div>
               <div class="actions">
                 <button class="btn hl">Highlight</button>
-                <button class="btn save">Save Answer</button>
                 <button class="btn reject">Reject</button>
               </div>
             </div>
@@ -68,7 +63,7 @@
           card.addEventListener('click', (e) => {
             // avoid clicks on inputs/buttons triggering duplicate highlight
             const t = e.target;
-            if (t && (t.classList.contains('ans') || t.classList.contains('save'))) return;
+            if (t && (t.classList.contains('hl') || t.classList.contains('reject'))) return;
             highlight(id);
           });
           const hlBtn = card.querySelector('.hl');
@@ -81,14 +76,6 @@
             } else {
               await highlight(id);
             }
-          });
-          const saveBtn = card.querySelector('.save');
-          if (saveBtn) saveBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const input = card.querySelector('.ans');
-            const val = (input?.value || '').trim();
-            if (!val) return;
-            await answer(id, val);
           });
           const rejectBtn = card.querySelector('.reject');
           if (rejectBtn) rejectBtn.addEventListener('click', async (e) => {
@@ -104,10 +91,7 @@
         await fetch('/api/qna/highlight', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
       }
 
-      async function answer(id, ans) {
-        await fetch('/api/qna/answer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, answer: ans }) });
-        load();
-      }
+      // answering removed per spec
 
       const s = document.createElement('script');
       s.src = '/socket.io/socket.io.js';

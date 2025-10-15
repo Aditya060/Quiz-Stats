@@ -86,15 +86,14 @@
           currentBox.style.display = 'none';
         }
 
-        const answered = list.qna.filter(i => i.answered && i.answer_text);
+        const answered = list.qna; // show all submissions without answer content
         answered.sort((a,b) => a.id - b.id); // chronological
         const answersEl = document.getElementById('answers');
         answersEl.innerHTML = answered.length ? answered.map(i => `
           <div style=\"border-top:1px dashed #2a2933; padding-top:14px; margin-top:14px;\">
             <div class=\"question\">${i.text}</div>
             <div class=\"meta\">Asked by ${i.user || 'Anonymous'} • #${i.id}</div>
-            <div class=\"small muted\" style=\"margin-top:4px;\">Answer</div>
-            <div class=\"answer\">${i.answer_text}</div>
+            
           </div>
         `).join('') : `<div class=\"meta\">No answers yet.</div>`;
       }
