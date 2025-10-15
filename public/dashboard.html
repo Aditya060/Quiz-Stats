@@ -15,9 +15,12 @@
       .pill:hover { transform: translateY(-1px); box-shadow: 0 16px 44px rgba(183,106,91,.45); }
       .card { border:1px solid var(--stroke); border-radius: 16px; padding: 18px; background: var(--glass); box-shadow: var(--shadow); margin-bottom: 16px; backdrop-filter: blur(12px) saturate(140%); }
       .question { font-weight:800; font-size:20px; margin:0 0 8px 0; }
-      .option { display:flex; justify-content: space-between; padding: 10px 0; border-bottom:1px dashed rgba(255,255,255,0.12); }
+      .option { display:flex; flex-direction:column; gap:6px; padding: 10px 0; border-bottom:1px dashed rgba(255,255,255,0.12); }
       .option:last-child { border-bottom: 0; }
-      .count { color: var(--accent); font-weight:900; }
+      .row { display:flex; justify-content: space-between; align-items:center; }
+      .count { color: var(--accent); font-weight:900; margin-left:8px; }
+      .bar { height: 12px; background: rgba(255,255,255,0.06); border:1px solid var(--stroke); border-radius: 999px; overflow: hidden; }
+      .fill { height: 100%; background: linear-gradient(90deg, color-mix(in oklab, var(--accent), white 8%), var(--accent)); box-shadow: 0 6px 18px rgba(183,106,91,.30) inset; }
       .muted { color: var(--muted); }
       a { color: var(--accent); }
       .total { font-weight:900; color: var(--muted); }
@@ -40,25 +43,39 @@
     </div>
     <script>
       async function loadStats() {
-        const res = await fetch('/api/stats');
+        // show only the active question
+        const [stateRes, qRes] = await Promise.all([
+          fetch('/api/state'),
+          fetch('/api/questions')
+        ]);
+        const state = await stateRes.json();
+        const qs = await qRes.json();
+        const active = qs.questions?.[state.activeIndex];
+        if (!active) { render([]); return; }
+        const res = await fetch(`/api/stats?questionId=${active.id}`);
         const data = await res.json();
         render(data.stats);
       }
 
       function render(stats) {
         const container = document.getElementById('stats');
-        container.innerHTML = stats.map(q => `
+        if (!stats || !stats.length) { container.innerHTML = '<div class="card"><div class="muted">No question active.</div></div>'; return; }
+        const q = stats[0];
+        const total = q.total || 0;
+        container.innerHTML = `
           <div class="card">
             <div class="question">${q.text}</div>
-            <div class="total">Total participants: ${q.total}</div>
-            ${q.options.map(o => `
-              <div class="option">
-                <span>${o.text}</span>
-                <strong class="count">${o.count}</strong>
-              </div>
-            `).join('')}
-          </div>
-        `).join('');
+            <div class="total">Total participants: ${total}</div>
+            ${q.options.map(o => {
+              const pct = total ? Math.round((o.count / total) * 100) : 0;
+              return `
+                <div class=\"option\">
+                  <div class=\"row\"><span>${o.text}</span><strong class=\"count\">${o.count}</strong></div>
+                  <div class=\"bar\"><div class=\"fill\" style=\"width:${pct}%;\"></div></div>
+                </div>
+              `;
+            }).join('')}
+          </div>`;
       }
 
       loadStats();
