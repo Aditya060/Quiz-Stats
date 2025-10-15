@@ -67,10 +67,10 @@
         if (!active) { render([]); return; }
         const res = await fetch(`/api/stats?questionId=${active.id}`);
         const data = await res.json();
-        render(data.stats);
+        render(data.stats, state.revealCorrect);
       }
 
-      function render(stats) {
+      function render(stats, revealCorrect) {
         const container = document.getElementById('stats');
         if (!stats || !stats.length) { container.innerHTML = '<div class="card"><div class="muted">No question active.</div></div>'; return; }
         const q = stats[0];
@@ -81,7 +81,7 @@
             <div class="total">Total participants: ${total}</div>
             ${q.options.map(o => {
               const pct = total ? Math.round((o.count / total) * 100) : 0;
-              const isCorrect = q.correctOptionId && o.id === q.correctOptionId;
+              const isCorrect = revealCorrect && q.correctOptionId && o.id === q.correctOptionId;
               return `
                 <div class=\"option\">
                   <div class=\"row\"><span>${o.text}${isCorrect ? ' ✓' : ''}</span><strong class=\"count\">${o.count}</strong></div>

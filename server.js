@@ -138,6 +138,7 @@ if (currentSeed !== '4') {
 // Initialize poll state defaults
 if (!getMeta.get('poll_status')) setMeta.run('poll_status', 'idle');
 if (!getMeta.get('active_question_index')) setMeta.run('active_question_index', '0');
+if (!getMeta.get('reveal_correct')) setMeta.run('reveal_correct', '0');
 
 // API: get questions with options
 app.get('/api/questions', (req, res) => {
@@ -156,7 +157,8 @@ app.get('/api/state', (req, res) => {
   const status = getMeta.get('poll_status')?.value || 'idle';
   const activeIndex = Number(getMeta.get('active_question_index')?.value || '0');
   const totalQuestions = db.prepare('SELECT COUNT(1) as c FROM questions').get().c;
-  res.json({ status, activeIndex, totalQuestions });
+  const revealCorrect = getMeta.get('reveal_correct')?.value === '1';
+  res.json({ status, activeIndex, totalQuestions, revealCorrect });
 });
 
 // API: submit answers [{questionId, optionId}, ...]
@@ -256,6 +258,15 @@ app.post('/api/admin/end', (req, res) => {
   setMeta.run('poll_status', 'ended');
   io.emit('stateChanged');
   res.json({ ok: true });
+});
+
+// Admin toggle to reveal/hide correct answers on displays
+app.post('/api/admin/reveal-correct', (req, res) => {
+  const reveal = Boolean(req.body?.reveal);
+  const val = reveal ? '1' : '0';
+  setMeta.run('reveal_correct', val);
+  io.emit('stateChanged');
+  res.json({ ok: true, reveal });
 });
 
 // Q&A API

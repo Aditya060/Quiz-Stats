@@ -34,6 +34,7 @@
         <button id="start" class="btn">Start Poll</button>
         <button id="next" class="btn">Next Question</button>
         <button id="end" class="btn">End Poll</button>
+        <button id="reveal" class="btn" style="margin-left:auto;">Show Correct</button>
       </div>
 
       <div class="card">
@@ -81,6 +82,14 @@
       document.getElementById('end').addEventListener('click', async () => {
         await fetch('/api/admin/end', { method: 'POST' });
         refreshState();
+      });
+
+      document.getElementById('reveal').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const on = btn.dataset.on === '1' ? false : true;
+        await fetch('/api/admin/reveal-correct', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reveal: on }) });
+        btn.dataset.on = on ? '1' : '0';
+        btn.textContent = on ? 'Hide Correct' : 'Show Correct';
       });
 
       const s = document.createElement('script');
